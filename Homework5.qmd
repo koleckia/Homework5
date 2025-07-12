@@ -1,0 +1,97 @@
+---
+title: "Modelling"
+format: pdf
+editor: visual
+---
+
+
+## Task 1:Conceptual Questions 
+
+* What is the purpose of using cross-validation when fitting a random forest model?
+
+* Describe the bagged tree algorithm.
+
+* What is meant by a general linear model?
+
+A general linear model is the  linear regression model with a continuous and normally distributed response variable and predictors that can be continous or categorical. This can include both single and multiple regression models. 
+
+*  When fitting a multiple linear regression model, what does adding an interaction term
+do? That is, what does it allow the model to do differently as compared to when it is
+not included in the model?
+
+The interaction term allows for the effect of one variables to depend on the value of another. When you just include the main effect in a model, you are only looking at the individual effect of each variable. If you have an interaction term, you can look at the effect of the interaction between both variables. 
+
+* Why do we split our data into a training and test set?
+
+The reason we split our data into a training and test set is to determine if our model can predict observations well it has yet to see. This will let us avoid overfitting the model. 
+
+
+## Task 2: Data Prep 
+###Packages and daata
+
+
+
+```{r,message=FALSE}
+library(tidyverse)
+library(tidymodels)
+library(yardstick)
+library(ggplot2)
+
+#Read in data as tibble 
+df_heart <- read.csv("heart.csv")
+df_heart <- as_tibble(df_heart)
+
+#Summarize data
+summary(df_heart)
+```
+1. Run and report summary() on your data set. Then, answer the following questions:
+* What type of variable (in R ) is Heart Disease? Categorical or Quantitative? 
+  It is currently a quantitative variable in R.
+
+* Does this make sense? Why or why not.
+
+This does not make sense. It should be a categorical variable since the only values are 1 and 0. 
+
+2. Change HeartDisease to be the appropriate data type, and name it something different. In the same tidyverse pipeline, remove the ST_Slope variable and the original
+HeartDisease variable. Save your new data set as new_heart. We will use this new
+data set for the remainder of the assignment.
+
+
+```{r,message=FALSE}
+
+new_heart <- df_heart |> 
+  mutate(HeartDisease = factor(HeartDisease)) |> 
+ select(-ST_Slope)
+
+summary(new_heart)
+
+```
+
+
+##Task 3: EDA
+
+1. We are going to model someone’s age (our response variable) as a function of heart
+disease and their max heart rate. First, create the appropriate scatterplot to visualize
+this relationship. Add a line to the scatterplot that represents if someone has or does not
+have heart disease. Remove the standard error bars from the lines and add appropriate
+labels. Also, change the color pallet to be more colorblind friendly.
+
+```{r,message=FALSE}
+
+ggplot(data = new_heart, aes(x = MaxHR, y = Age, color =HeartDisease)) +
+ geom_point() +
+  geom_smooth(method ="lm",se=FALSE) +
+  scale_color_viridis_d(option ="C")
+
+```
+
+2. Based on visual evidence, do you think an interaction model or an additive model is
+more appropriate? Justify your answer.
+
+Based on the visual evidence, this looks like it will be an interaction model. There seems to be an interaction between MaxHR and heart disease as those with lower MaxHR tend not to have heart disease and those with higher MaxHR do have heart disease. 
+
+##Task 4: Testing and Training
+
+##Task 5: OLS LASSO
+
+.
