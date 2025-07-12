@@ -57,7 +57,7 @@ HeartDisease variable. Save your new data set as new_heart. We will use this new
 data set for the remainder of the assignment.
 
 
-```{r,message=FALSE}
+```{r}
 
 new_heart <- df_heart |> 
   mutate(HeartDisease = factor(HeartDisease)) |> 
@@ -76,7 +76,7 @@ this relationship. Add a line to the scatterplot that represents if someone has 
 have heart disease. Remove the standard error bars from the lines and add appropriate
 labels. Also, change the color pallet to be more colorblind friendly.
 
-```{r,message=FALSE}
+```{r}
 
 ggplot(data = new_heart, aes(x = MaxHR, y = Age, color =HeartDisease)) +
  geom_point() +
@@ -92,6 +92,46 @@ Based on the visual evidence, this looks like it will be an interaction model. T
 
 ##Task 4: Testing and Training
 
+
+```{r}
+set.seed(101)
+heart_split <- initial_split(new_heart,prop=.8)
+test <- testing(heart_split)
+train <- training(heart_split)
+
+```
+
 ##Task 5: OLS LASSO
 
+1. Regardless of your answer in Task 3, we are going to fit an interaction model. First fit
+an interaction model (named ols_mlr) with age as your response, and max heart rate
++ heart disease as your explanatory variables using the training data set using ordinary
+least squares regression. Report the summary output.
+
+```{r,message=FALSE}
+ols_mlr <- lm(Age ~ MaxHR + HeartDisease + MaxHR*HeartDisease, data=train)
+
+summary(ols_mlr)
+```
+
+2. We are going to use RMSE to evaluate this model’s predictive performance on new
+data. Test your model on the testing data set. Calculate the residual mean square error
+(RMSE) and report it below.
+
+```{r,message=FALSE}
+#Use predict on new model 
+test |> 
+  select(Age,MaxHR, HeartDisease)|>
+  mutate(model_1 = predict(ols_mlr, newdata=test))
+
+#obtain the test set RMSE 
+rmse_vec(test$Age,predict(ols_mlr, newdata=test))
+```
+
+3. Now, we are going to see if a model fit using LASSO has better predictive performance
+than with OLS. We are going to use cross validation to select the best tuning parameter,
+and then evaluate our LASSO model on the testing data set and compare RMSEs.
+
+
+##Task 6: Logistic Regression
 .
