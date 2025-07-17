@@ -40,6 +40,7 @@ library(tidyverse)
 library(tidymodels)
 library(yardstick)
 library(ggplot2)
+library(glmnet)
 
 #Read in data as tibble 
 df_heart <- read.csv("heart.csv")
@@ -113,14 +114,12 @@ an interaction model (named ols_mlr) with age as your response, and max heart ra
 least squares regression. Report the summary output.
 
 ```{r,message=FALSE}
-ols_mlr <- lm(Age ~ MaxHR + HeartDisease + MaxHR*HeartDisease, data=train)
+ols_mlr <- lm(Age ~ MaxHR * HeartDisease, data=train)
 
 summary(ols_mlr)
 ```
 
-2. We are going to use RMSE to evaluate this model’s predictive performance on new
-data. Test your model on the testing data set. Calculate the residual mean square error
-(RMSE) and report it below.
+2. We are going to use RMSE to evaluate this model’s predictive performance on new data. Test your model on the testing data set. Calculate the residual mean square error (RMSE) and report it below.
 
 ```{r,message=FALSE}
 #Use predict on new model 
@@ -132,10 +131,93 @@ test |>
 rmse_vec(test$Age,predict(ols_mlr, newdata=test))
 ```
 
-3. Now, we are going to see if a model fit using LASSO has better predictive performance
-than with OLS. We are going to use cross validation to select the best tuning parameter,
-and then evaluate our LASSO model on the testing data set and compare RMSEs.
+3. Now, we are going to see if a model fit using LASSO has better predictive performance than with OLS. We are going to use cross validation to select the best tuning parameter, and then evaluate our LASSO model on the testing data set and compare RMSEs.
 
+
+```{r}
+#Create fold VC to choose our tuning parameter
+heart_CV_folds <- vfold_cv(train, 10)
+
+#Set up LASSO_recipe 
+#use a + to separate your explanatory variables, regardless ofthe #fact that this will be an interaction model
+#Standardize your variables as normal
+#Add an additional pipe into the function step_interact().
+#Within step_interact(), start with a ~, and then put variable_name_1:starts_with(“variable_name_2_
+
+LASSO_recipe <- recipe(Age ~ MaxHR + HeartDisease, data=train) |>
+  step_dummy(HeartDisease)|>
+  step_normalize(all_predictors()) |>
+  step_interact(~ MaxHR:starts_with("HeartDisease_"))
+
+LASSO_recipe
+
+```
+
+4. Now, set up your appropriate spec, and grid. Next, select your final model, and report the results using the tidy() function around your model name.
+
+```{r}
+#Set up your appropriate spec 
+
+LASSO_spec <- linear_reg(penalty = tune(), mixture = 1) |>
+  set_engine("glmnet")
+
+#Set up workflow 
+
+LASSO_wkf <- workflow() |>
+  add_recipe(LASSO_recipe) |>
+  add_model(LASSO_spec)
+LASSO_wkf
+
+#Set up appropriate grid 
+LASSO_grid <- LASSO_wkf |>
+  tune_grid(resamples = heart_CV_folds ,
+            grid = grid_regular(penalty(), levels = 200)) 
+
+LASSO_grid
+
+#Select your final model and report the results using 
+#the tidy() function around your model name
+
+lowest_rmse <- LASSO_grid |>
+  select_best(metric = "rmse")
+lowest_rmse
+
+LASSO_wkf |>
+  finalize_workflow(lowest_rmse)
+
+LASSO_final <- LASSO_wkf |>
+  finalize_workflow(lowest_rmse) |>
+  fit(train)
+tidy(LASSO_final)
+
+```
+
+5. Without looking at the RMSE calculations, would you expect the RMSE calculations to be roughly the same or different? Justify your answer using output from your LASSO model.
+
+6. Now compare the RMSE between your OLS and LASSO model and show that the RMSE calculations were roughly the same.
+
+```{r}
+#obtain the test set RMSE 
+rmse_vec(test$Age,predict(ols_mlr, newdata=test))
+
+
+LASSO_final |>
+  predict(test) |>
+  pull() |>
+  rmse_vec(truth = test$Age)
+```
+
+7. Why are the RMSE calculations roughly the same if the coefficients for each model are different?
 
 ##Task 6: Logistic Regression
-.
+
+Propose two different logistic regression models with heart disease as our response. Note: You don’t have to use the dummy columns you made here as the glm() function (and the caret implementation of it) can handle factor/character variables as predictors.
+
+Fit those models on the training set, using repeated CV.
+
+Identify your best performing model. Justify why this is your best performing model and provide a basic summary of it.
+
+2. Lastly, check how well your chosen model does on the test set using the confusionMatrix()
+function.
+
+3. Next, identify the values of sensitivity and specificity, and interpret them in the context of the problem.
