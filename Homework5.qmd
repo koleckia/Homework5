@@ -9,7 +9,11 @@ editor: visual
 
 * What is the purpose of using cross-validation when fitting a random forest model?
 
+The purpose of cross-validation when fitting a random forest model is to evalute and  validate a model in an unbaised manner. Specifically, in a random forest model, it can be used to help prevent overfitting and also help tune parameters. 
+
 * Describe the bagged tree algorithm.
+
+The bagged tree algorithm creates many bootstrap resamples and fits trees to each re sample. For the set of given predictors, it finds the predicted value for each tree. Then you combine the predictions from the trees to create a final predictions. For regression models, usually you use the average of the predictions. For the classication tree you use the most common prediction made by all the trees. 
 
 * What is meant by a general linear model?
 
