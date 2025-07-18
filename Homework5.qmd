@@ -213,11 +213,100 @@ LASSO_final |>
 
 Propose two different logistic regression models with heart disease as our response. Note: You don’t have to use the dummy columns you made here as the glm() function (and the caret implementation of it) can handle factor/character variables as predictors.
 
+```{r}
+#Propose two different logistic regression models with Heart Disease as our response
+
+
+summary(new_heart)
+
+new_heart |>
+ group_by(HeartDisease) |>
+ summarize(mean_Age = mean(Age),
+ mean_RestingBP = mean(RestingBP))
+
+#One model with gender and cholesterol
+
+new_heart |>
+ group_by(HeartDisease,Sex) |>
+ summarize(Cholesterol = mean(Cholesterol))
+
+LR1_rec <- recipe(HeartDisease ~ Cholesterol + Sex,
+ data = train) |>
+ step_normalize(Cholesterol) |>
+ step_dummy(Sex)
+
+#One model with gender and MaxHR
+
+new_heart |>
+ group_by(HeartDisease,Sex) |>
+ summarize(MaxHR = mean(MaxHR))
+
+LR2_rec <- recipe(HeartDisease ~ Sex + MaxHR,
+ data = train) |>
+ step_normalize(MaxHR) |>
+ step_dummy(Sex)
+
+
+```
+
 Fit those models on the training set, using repeated CV.
 
+```{r}
+#Fit model on the training set using repeated CV
+
+LR_spec <- logistic_reg() |>
+ set_engine("glm")
+
+LR1_wkf <- workflow() |>
+ add_recipe(LR1_rec) |>
+ add_model(LR_spec)
+
+LR2_wkf <- workflow() |>
+ add_recipe(LR2_rec) |>
+ add_model(LR_spec)
+
+LR1_fit <- LR1_wkf |>
+ fit_resamples(heart_CV_folds, metrics = metric_set(accuracy, mn_log_loss))
+
+LR2_fit <- LR2_wkf |>
+ fit_resamples(heart_CV_folds, metrics = metric_set(accuracy, mn_log_loss))
+
+```
+
 Identify your best performing model. Justify why this is your best performing model and provide a basic summary of it.
+
+```{r}
+#Identify your best performing model 
+
+rbind(LR1_fit |> collect_metrics(),
+ LR2_fit |> collect_metrics()) |>
+ mutate(Model = c("Model1", "Model1", "Model2", "Model2")) |>
+ select(Model, everything())
+
+#Compare to the proportions of 1's in the training data
+mean(train$HeartDisease == "1")
+```
 
 2. Lastly, check how well your chosen model does on the test set using the confusionMatrix()
 function.
 
+```{r}
+#Identify your best performing model 
+
+LR_train_fit <- LR2_wkf |>
+ fit(train)
+
+conf_mat(train |> mutate(estimate = LR_train_fit |> predict(train) |> pull()), #data
+ HeartDisease, #truth
+ estimate) #estimate from model
+
+```
+
 3. Next, identify the values of sensitivity and specificity, and interpret them in the context of the problem.
+
+```{r}
+#Identify the values of sensitivity and specificity, and interpret them in the context of the problem.
+
+
+
+```
