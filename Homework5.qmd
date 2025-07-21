@@ -139,10 +139,12 @@ rmse_vec(test$Age,predict(ols_mlr, newdata=test))
 heart_CV_folds <- vfold_cv(train, 10)
 
 #Set up LASSO_recipe 
-#use a + to separate your explanatory variables, regardless ofthe #fact that this will be an interaction model
+#use a + to separate your explanatory variables, regardless ofthe
+#fact that this will be an interaction model
 #Standardize your variables as normal
 #Add an additional pipe into the function step_interact().
-#Within step_interact(), start with a ~, and then put variable_name_1:starts_with(“variable_name_2_
+#Within step_interact(), start with a ~, and then put
+#variable_name_1:starts_with(“variable_name_2_
 
 LASSO_recipe <- recipe(Age ~ MaxHR + HeartDisease, data=train) |>
   step_dummy(HeartDisease)|>
