@@ -194,6 +194,8 @@ tidy(LASSO_final)
 
 5. Without looking at the RMSE calculations, would you expect the RMSE calculations to be roughly the same or different? Justify your answer using output from your LASSO model.
 
+I woudl expect the RMSE calculations to be different given the difference in coefficients. 
+
 6. Now compare the RMSE between your OLS and LASSO model and show that the RMSE calculations were roughly the same.
 
 ```{r}
@@ -208,6 +210,9 @@ LASSO_final |>
 ```
 
 7. Why are the RMSE calculations roughly the same if the coefficients for each model are different?
+
+The reason that the RMSE calculations are roughly the same because the LASSO model introduces penalties so the coefficients are able to be minimized and produce simpler models. It makes it simpler by minimizing irrelevant coefficents to 0. The linear least squares just minimizes error without taking into account the models complexity. So while the least squares does minimize error, it does not look at various values of coefficients. 
+
 
 ##Task 6: Logistic Regression
 
@@ -307,6 +312,22 @@ conf_mat(train |> mutate(estimate = LR_train_fit |> predict(train) |> pull()), #
 ```{r}
 #Identify the values of sensitivity and specificity, and interpret them in the context of the problem.
 
+#Sensitivity 
+TP <- 335
+FP <- 135
+FN <-83
+TN <- 181
+
+sensitivity <- TP / (TP+FN)
+sensitivity
+
+#Specificity 
+ 
+specificity <- TN/(TN+FP)
+specificity
 
 
 ```
+
+
+This model has high sensitivity (80%), meaning it identifies true positives very well. The specificity, the measurement of identifing ture negatives, is not as good as 57%.
